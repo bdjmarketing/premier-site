@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./image-slot.js"></script>
+<style>
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  html,body{margin:0;padding:0;background:#F4F0E8;}
+  body{color:#1E1B16;font-family:'Hanken Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  a{color:inherit;text-decoration:none;}
+  a:hover{color:#A15A38;}
+  ::selection{background:#A15A38;color:#F4F0E8;}
+  input,textarea,button{font-family:inherit;}
+  [data-mobileonly]{display:none !important;}
+  @keyframes cue{0%{transform:translateY(0);opacity:.9}60%{opacity:.25}100%{transform:translateY(10px);opacity:0}}
+  @media(max-width:900px){
+    [data-desktoponly]{display:none !important;}
+    [data-mobileonly]{display:flex !important;}
+  }
+  @media(max-width:720px){
+    [data-gallery]{grid-template-columns:repeat(2,1fr) !important;grid-auto-rows:150px !important;}
+    [data-gallery]>div{grid-column:span 1 !important;grid-row:span 1 !important;}
+  }
+</style>
+</helmet>
+
+<div id="top" style="position:relative;width:100%;">
+
+  <header ref="{{ setNav }}" style="position:fixed;top:0;left:0;right:0;z-index:60;display:flex;align-items:center;justify-content:space-between;padding:20px clamp(20px,5vw,64px);border-bottom:1px solid transparent;transition:background .45s ease,padding .45s ease,border-color .45s ease;">
+    <a href="#top" style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:27px;letter-spacing:.01em;line-height:1;">Premier<span style="color:#A15A38;">.</span></a>
+    <nav data-desktoponly style="display:flex;gap:34px;align-items:center;font-size:14px;font-weight:500;letter-spacing:.01em;">
+      <a href="#materials">Materials</a>
+      <a href="#process">Process</a>
+      <a href="#services">Services</a>
+      <a href="#gallery">Gallery</a>
+      <a href="#about">About</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:18px;">
+      <a data-desktoponly href="tel:6628238824" style="font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.02em;">662.823.8824</a>
+      <a href="#quote" style="background:#1E1B16;color:#F4F0E8;padding:11px 21px;border-radius:100px;font-size:13px;font-weight:600;letter-spacing:.02em;transition:background .3s;" style-hover="background:#A15A38;">Free Quote</a>
+      <button data-mobileonly onClick="{{ toggleMenu }}" aria-label="Menu" style="display:none;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid rgba(30,27,22,.18);background:transparent;border-radius:100px;cursor:pointer;flex-direction:column;gap:4px;">
+        <span style="display:block;width:16px;height:1.5px;background:#1E1B16;"></span>
+        <span style="display:block;width:16px;height:1.5px;background:#1E1B16;"></span>
+      </button>
+    </div>
+  </header>
+
+  <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:70;background:#F4F0E8;display:flex;flex-direction:column;padding:22px clamp(20px,5vw,64px);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:27px;">Premier<span style="color:#A15A38;">.</span></span>
+        <button onClick="{{ closeMenu }}" aria-label="Close" style="width:42px;height:42px;border:1px solid rgba(30,27,22,.18);background:transparent;border-radius:100px;cursor:pointer;font-size:20px;line-height:1;">&times;</button>
+      </div>
+      <nav style="display:flex;flex-direction:column;gap:6px;margin-top:48px;font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:500;">
+        <a onClick="{{ closeMenu }}" href="#materials">Materials</a>
+        <a onClick="{{ closeMenu }}" href="#process">Process</a>
+        <a onClick="{{ closeMenu }}" href="#services">Services</a>
+        <a onClick="{{ closeMenu }}" href="#gallery">Gallery</a>
+        <a onClick="{{ closeMenu }}" href="#about">About</a>
+        <a onClick="{{ closeMenu }}" href="#quote">Free Quote</a>
+      </nav>
+      <a href="tel:6628238824" style="margin-top:auto;font-family:'Space Mono',monospace;font-size:15px;">662.823.8824 &middot; Tupelo, MS</a>
+    </div>
+  </sc-if>
+
+  <!-- ============ HERO : scroll-pinned 3D install ============ -->
+  <section ref="{{ setTrack }}" style="position:relative;height:600vh;">
+    <div style="position:sticky;top:0;height:100vh;overflow:hidden;background:radial-gradient(130% 105% at 50% 18%,#F8F4EC 0%,#EAE2D2 62%,#DBD0BB 100%);">
+      <canvas ref="{{ setCanvas }}" style="position:absolute;inset:0;width:100%;height:100%;display:block;"></canvas>
+
+      <!-- intro headline -->
+      <div data-cap data-a="-0.2" data-b="0.06" style="position:absolute;left:clamp(20px,5vw,64px);top:clamp(120px,26vh,240px);max-width:min(88vw,720px);">
+        <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">Premier Countertops &mdash; Tupelo, Mississippi</div>
+        <h1 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(44px,8.2vw,116px);line-height:.96;letter-spacing:-.015em;margin:18px 0 0;text-wrap:balance;">Elevating your<br>countertops<br>starts here.</h1>
+        <p style="font-size:clamp(16px,1.4vw,19px);line-height:1.6;color:#4b463c;margin:22px 0 0;max-width:440px;">Watch a raw run of cabinets become a finished kitchen &mdash; measured, fabricated, and installed with twenty years of craftsmanship.</p>
+      </div>
+
+      <!-- phase caption stack (bottom-left) -->
+      <div style="position:absolute;left:clamp(20px,5vw,64px);bottom:clamp(42px,8vh,96px);width:min(84vw,560px);height:150px;pointer-events:none;">
+        <div data-cap data-a="0.085" data-b="0.215" style="position:absolute;bottom:0;left:0;opacity:0;pointer-events:none;">
+          <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.2em;color:#A15A38;">01 &mdash; TEMPLATE</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,44px);line-height:1.05;margin-top:8px;">Precise digital measurements.</div>
+          <p style="color:#4b463c;font-size:15px;margin:6px 0 0;max-width:380px;">Down to the millimeter, so your stone fits like it grew there.</p>
+        </div>
+        <div data-cap data-a="0.30" data-b="0.44" style="position:absolute;bottom:0;left:0;opacity:0;pointer-events:none;">
+          <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.2em;color:#A15A38;">02 &mdash; FABRICATION</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,44px);line-height:1.05;margin-top:8px;">Your slab, lowered into place.</div>
+          <p style="color:#4b463c;font-size:15px;margin:6px 0 0;max-width:380px;">Cut from a single piece of Calacatta, set by hand.</p>
+        </div>
+        <div data-cap data-a="0.50" data-b="0.60" style="position:absolute;bottom:0;left:0;opacity:0;pointer-events:none;">
+          <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.2em;color:#A15A38;">03 &mdash; THE EDGE</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,44px);line-height:1.05;margin-top:8px;">Hand-polished profiles.</div>
+          <p style="color:#4b463c;font-size:15px;margin:6px 0 0;max-width:380px;">Every edge finished until the light runs clean across it.</p>
+        </div>
+        <div data-cap data-a="0.64" data-b="0.77" style="position:absolute;bottom:0;left:0;opacity:0;pointer-events:none;">
+          <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.2em;color:#A15A38;">04 &mdash; DETAILS</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(28px,3.6vw,44px);line-height:1.05;margin-top:8px;">Sink and fixtures, seamlessly set.</div>
+          <p style="color:#4b463c;font-size:15px;margin:6px 0 0;max-width:380px;">Undermount, sealed, and finished to last.</p>
+        </div>
+      </div>
+
+      <!-- template HUD -->
+      <div data-cap data-a="0.075" data-b="0.215" style="position:absolute;inset:clamp(26px,6vw,72px);pointer-events:none;opacity:0;">
+        <div style="position:absolute;top:0;left:0;width:26px;height:26px;border-top:1.5px solid #A15A38;border-left:1.5px solid #A15A38;"></div>
+        <div style="position:absolute;top:0;right:0;width:26px;height:26px;border-top:1.5px solid #A15A38;border-right:1.5px solid #A15A38;"></div>
+        <div style="position:absolute;bottom:0;left:0;width:26px;height:26px;border-bottom:1.5px solid #A15A38;border-left:1.5px solid #A15A38;"></div>
+        <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-bottom:1.5px solid #A15A38;border-right:1.5px solid #A15A38;"></div>
+        <div ref="{{ setScan }}" style="position:absolute;left:0;right:0;top:12%;height:1px;background:linear-gradient(90deg,transparent,#A15A38,transparent);box-shadow:0 0 12px rgba(161,90,56,.5);"></div>
+        <div style="position:absolute;top:50%;right:0;transform:translateY(-50%);font-family:'Space Mono',monospace;font-size:12px;color:#A15A38;letter-spacing:.12em;text-align:right;">62 3/8&Prime;<br><span style="opacity:.55;">DEPTH 25 1/2&Prime;</span></div>
+        <div style="position:absolute;top:0;left:50%;transform:translateX(-50%);font-family:'Space Mono',monospace;font-size:11px;color:#A15A38;letter-spacing:.24em;">DIGITAL TEMPLATE &middot; SCANNING</div>
+      </div>
+
+      <!-- final reveal -->
+      <div data-cap data-a="0.85" data-b="1.2" style="position:absolute;left:0;right:0;top:clamp(96px,22vh,200px);display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 24px;opacity:0;pointer-events:none;">
+        <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">Installed &amp; finished</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(46px,7.5vw,104px);line-height:.98;letter-spacing:-.015em;margin:14px 0 0;">Welcome home.</h2>
+        <p style="font-size:clamp(16px,1.4vw,19px);color:#4b463c;margin:18px 0 26px;max-width:440px;">From bare cabinets to the heart of your home. That's the Premier difference.</p>
+        <a href="#quote" style="pointer-events:auto;background:#A15A38;color:#F8F4EC;padding:15px 30px;border-radius:100px;font-size:14px;font-weight:600;letter-spacing:.02em;transition:transform .3s,background .3s;" style-hover="background:#1E1B16;">Request your free quote &rarr;</a>
+      </div>
+
+      <!-- phase rail -->
+      <div data-desktoponly style="position:absolute;right:clamp(20px,4vw,54px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:15px;pointer-events:none;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.1em;">
+        <div data-rail="0" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;transition:opacity .3s,color .3s;">TEMPLATE <span style="width:24px;height:1px;background:currentColor;display:inline-block;"></span> 01</div>
+        <div data-rail="1" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;transition:opacity .3s,color .3s;">FABRICATION <span style="width:24px;height:1px;background:currentColor;display:inline-block;"></span> 02</div>
+        <div data-rail="2" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;transition:opacity .3s,color .3s;">EDGE <span style="width:24px;height:1px;background:currentColor;display:inline-block;"></span> 03</div>
+        <div data-rail="3" style="display:flex;align-items:center;gap:10px;justify-content:flex-end;transition:opacity .3s,color .3s;">DETAILS <span style="width:24px;height:1px;background:currentColor;display:inline-block;"></span> 04</div>
+      </div>
+
+      <!-- scroll cue -->
+      <div data-cap data-a="-0.2" data-b="0.05" style="position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:9px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.24em;color:#6b6353;">
+        SCROLL TO BUILD
+        <span style="width:1px;height:34px;background:linear-gradient(#A15A38,transparent);animation:cue 1.7s ease-in-out infinite;"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARQUEE / QUALITY BAND ============ -->
+  <section style="background:#1E1B16;color:#F4F0E8;padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);">
+    <div style="max-width:1080px;margin:0 auto;text-align:center;">
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#C98A63;">Since 2003</div>
+      <blockquote data-reveal style="opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.2,1) .08s,transform 1s cubic-bezier(.2,.7,.2,1) .08s;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:clamp(30px,4.6vw,60px);line-height:1.12;letter-spacing:-.01em;margin:26px auto 0;max-width:15ch;text-wrap:balance;">&ldquo;The bitterness of poor quality lasts long after the sweetness of low price is forgotten.&rdquo;</blockquote>
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.2,1) .16s,transform 1s cubic-bezier(.2,.7,.2,1) .16s;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.14em;color:#9a9384;margin-top:30px;">&mdash; BENJAMIN FRANKLIN</div>
+      <p data-reveal style="opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.2,1) .24s,transform 1s cubic-bezier(.2,.7,.2,1) .24s;font-size:clamp(16px,1.4vw,18px);line-height:1.7;color:#c9c3b6;max-width:620px;margin:40px auto 0;">Your new stone countertops shouldn't just be a one-time purchase &mdash; they should be one you're proud of for years to come. With Premier, you know you're receiving unmatched care from measurement to final install.</p>
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity 1s cubic-bezier(.2,.7,.2,1) .32s,transform 1s cubic-bezier(.2,.7,.2,1) .32s;display:flex;flex-wrap:wrap;gap:clamp(28px,6vw,80px);justify-content:center;margin-top:56px;">
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:clamp(38px,5vw,58px);line-height:1;">20+</div><div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.12em;color:#9a9384;margin-top:8px;">YEARS FABRICATING</div></div>
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:clamp(38px,5vw,58px);line-height:1;">200+</div><div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.12em;color:#9a9384;margin-top:8px;">COLORS IN STOCK</div></div>
+        <div><div style="font-family:'Cormorant Garamond',serif;font-size:clamp(38px,5vw,58px);line-height:1;">5&#9733;</div><div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.12em;color:#9a9384;margin-top:8px;">CLIENT-RATED</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MATERIALS ============ -->
+  <section id="materials" style="padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);max-width:1400px;margin:0 auto;">
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;">
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);">
+        <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">The Collection</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.2vw,64px);line-height:1;letter-spacing:-.015em;margin:16px 0 0;">Stone worth<br>living on.</h2>
+      </div>
+      <p data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1) .1s,transform .9s cubic-bezier(.2,.7,.2,1) .1s;max-width:400px;font-size:16px;line-height:1.7;color:#4b463c;">Granite, marble, quartzite, quartz, and butcher block &mdash; over 200 colors in the showroom. Here are the ones people fall for.</p>
+    </div>
+
+    <div style="margin-top:clamp(48px,6vw,80px);">
+      <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.16em;color:#8a8271;border-bottom:1px solid rgba(30,27,22,.14);padding-bottom:14px;">NATURAL STONE &mdash; GRANITE / MARBLE / QUARTZITE</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:clamp(14px,1.6vw,22px);margin-top:26px;">
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);">
+          <div data-swatch data-kind="Shadow Storm" style="aspect-ratio:4/3;border-radius:10px;background:#4c4f54;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Shadow Storm</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">GRANITE</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .04s,transform .8s cubic-bezier(.2,.7,.2,1) .04s;">
+          <div data-swatch data-kind="Fantasy Brown" style="aspect-ratio:4/3;border-radius:10px;background:#b3a48b;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Fantasy Brown</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZITE</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .08s,transform .8s cubic-bezier(.2,.7,.2,1) .08s;">
+          <div data-swatch data-kind="Taj Mahal" style="aspect-ratio:4/3;border-radius:10px;background:#e6dcc4;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Taj Mahal</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZITE</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .12s,transform .8s cubic-bezier(.2,.7,.2,1) .12s;">
+          <div data-swatch data-kind="Le Blanc" style="aspect-ratio:4/3;border-radius:10px;background:#edefe9;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Le Blanc</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">MARBLE</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .16s,transform .8s cubic-bezier(.2,.7,.2,1) .16s;">
+          <div data-swatch data-kind="White Rhino" style="aspect-ratio:4/3;border-radius:10px;background:#e6e6df;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">White Rhino</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZITE</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .2s,transform .8s cubic-bezier(.2,.7,.2,1) .2s;">
+          <div data-swatch data-kind="Black Mist" style="aspect-ratio:4/3;border-radius:10px;background:#24251f;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Black Mist</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">GRANITE</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:clamp(44px,5vw,72px);">
+      <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.16em;color:#8a8271;border-bottom:1px solid rgba(30,27,22,.14);padding-bottom:14px;">ENGINEERED QUARTZ &mdash; LOW-MAINTENANCE / NON-POROUS</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:clamp(14px,1.6vw,22px);margin-top:26px;">
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);">
+          <div data-swatch data-kind="Bianco Marina" style="aspect-ratio:4/3;border-radius:10px;background:#eeefe8;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Bianco Marina</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZ</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .04s,transform .8s cubic-bezier(.2,.7,.2,1) .04s;">
+          <div data-swatch data-kind="Ostara Dawn" style="aspect-ratio:4/3;border-radius:10px;background:#ece3d2;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Ostara Dawn</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZ</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .08s,transform .8s cubic-bezier(.2,.7,.2,1) .08s;">
+          <div data-swatch data-kind="Calacatta Idillio" style="aspect-ratio:4/3;border-radius:10px;background:#f0eee7;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Calacatta Idillio</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZ</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .12s,transform .8s cubic-bezier(.2,.7,.2,1) .12s;">
+          <div data-swatch data-kind="Calacatta Miraggio Duo" style="aspect-ratio:4/3;border-radius:10px;background:#edece5;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Miraggio Duo</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZ</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .16s,transform .8s cubic-bezier(.2,.7,.2,1) .16s;">
+          <div data-swatch data-kind="Lien Azul" style="aspect-ratio:4/3;border-radius:10px;background:#e9ebe9;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Lien Azul</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZ</span></div>
+        </div>
+        <div data-reveal class="mat" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .2s,transform .8s cubic-bezier(.2,.7,.2,1) .2s;">
+          <div data-swatch data-kind="Woodcroft" style="aspect-ratio:4/3;border-radius:10px;background:#d7ccb6;box-shadow:inset 0 0 0 1px rgba(30,27,22,.08);"></div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:12px;"><span style="font-family:'Cormorant Garamond',serif;font-size:21px;">Woodcroft</span><span style="font-family:'Space Mono',monospace;font-size:11px;color:#8a8271;">QUARTZ</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PROCESS ============ -->
+  <section id="process" style="background:#EDE7DA;padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);">
+    <div style="max-width:1400px;margin:0 auto;">
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);max-width:640px;">
+        <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">What to expect</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.2vw,64px);line-height:1;letter-spacing:-.015em;margin:16px 0 0;">Four steps to a<br>flawless finish.</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:clamp(20px,2.4vw,40px);margin-top:clamp(48px,6vw,80px);">
+        <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);border-top:1px solid rgba(30,27,22,.2);padding-top:22px;">
+          <div style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;letter-spacing:.1em;">01</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;margin:14px 0 10px;">Visit the showroom</h3>
+          <p style="font-size:15px;line-height:1.65;color:#4b463c;margin:0;">See and feel the stone in person. Our Tupelo showroom holds 200+ colors so you can picture it in your home.</p>
+        </div>
+        <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .08s,transform .8s cubic-bezier(.2,.7,.2,1) .08s;border-top:1px solid rgba(30,27,22,.2);padding-top:22px;">
+          <div style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;letter-spacing:.1em;">02</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;margin:14px 0 10px;">Meet a consultant</h3>
+          <p style="font-size:15px;line-height:1.65;color:#4b463c;margin:0;">Bring your cabinet, flooring, and paint samples. Our designers help you land on the perfect pairing.</p>
+        </div>
+        <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .16s,transform .8s cubic-bezier(.2,.7,.2,1) .16s;border-top:1px solid rgba(30,27,22,.2);padding-top:22px;">
+          <div style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;letter-spacing:.1em;">03</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;margin:14px 0 10px;">Precise measurements</h3>
+          <p style="font-size:15px;line-height:1.65;color:#4b463c;margin:0;">We digitally template your space so your countertops complement the design and fit exactly.</p>
+        </div>
+        <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .24s,transform .8s cubic-bezier(.2,.7,.2,1) .24s;border-top:1px solid rgba(30,27,22,.2);padding-top:22px;">
+          <div style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;letter-spacing:.1em;">04</div>
+          <h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:26px;margin:14px 0 10px;">Flawless installation</h3>
+          <p style="font-size:15px;line-height:1.65;color:#4b463c;margin:0;">Our crew fabricates and installs with the precision that's earned us 5-star reviews across the region.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SERVICES ============ -->
+  <section id="services" style="padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);max-width:1400px;margin:0 auto;">
+    <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);max-width:640px;margin-bottom:clamp(40px,5vw,64px);">
+      <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">Your vision, our expertise</div>
+      <h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.2vw,64px);line-height:1;letter-spacing:-.015em;margin:16px 0 0;">What we do.</h2>
+    </div>
+    <div style="display:grid;gap:0;">
+      <a href="#quote" data-reveal class="svc" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1),background .3s;display:grid;grid-template-columns:auto 1fr auto;gap:clamp(20px,4vw,64px);align-items:center;padding:clamp(24px,3vw,40px) 8px;border-top:1px solid rgba(30,27,22,.16);" style-hover="background:#EDE7DA;">
+        <span style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;">01</span>
+        <div><h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(26px,3.4vw,40px);margin:0 0 6px;">Fabrication</h3><p style="font-size:15px;line-height:1.6;color:#4b463c;margin:0;max-width:56ch;">Custom countertop fabrication, crafted with precision and attention to every detail of your design.</p></div>
+        <span style="font-size:22px;color:#A15A38;">&rarr;</span>
+      </a>
+      <a href="#quote" data-reveal class="svc" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .06s,transform .8s cubic-bezier(.2,.7,.2,1) .06s,background .3s;display:grid;grid-template-columns:auto 1fr auto;gap:clamp(20px,4vw,64px);align-items:center;padding:clamp(24px,3vw,40px) 8px;border-top:1px solid rgba(30,27,22,.16);" style-hover="background:#EDE7DA;">
+        <span style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;">02</span>
+        <div><h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(26px,3.4vw,40px);margin:0 0 6px;">Residential</h3><p style="font-size:15px;line-height:1.6;color:#4b463c;margin:0;max-width:56ch;">Kitchens, bathrooms, and custom pieces &mdash; expert service tailored to your home and your vision.</p></div>
+        <span style="font-size:22px;color:#A15A38;">&rarr;</span>
+      </a>
+      <a href="#quote" data-reveal class="svc" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .12s,transform .8s cubic-bezier(.2,.7,.2,1) .12s,background .3s;display:grid;grid-template-columns:auto 1fr auto;gap:clamp(20px,4vw,64px);align-items:center;padding:clamp(24px,3vw,40px) 8px;border-top:1px solid rgba(30,27,22,.16);" style-hover="background:#EDE7DA;">
+        <span style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;">03</span>
+        <div><h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(26px,3.4vw,40px);margin:0 0 6px;">Commercial</h3><p style="font-size:15px;line-height:1.6;color:#4b463c;margin:0;max-width:56ch;">Durable, professional-grade surfaces for offices, retail, and multi-unit projects of any scale.</p></div>
+        <span style="font-size:22px;color:#A15A38;">&rarr;</span>
+      </a>
+      <a href="#quote" data-reveal class="svc" style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .18s,transform .8s cubic-bezier(.2,.7,.2,1) .18s,background .3s;display:grid;grid-template-columns:auto 1fr auto;gap:clamp(20px,4vw,64px);align-items:center;padding:clamp(24px,3vw,40px) 8px;border-top:1px solid rgba(30,27,22,.16);border-bottom:1px solid rgba(30,27,22,.16);" style-hover="background:#EDE7DA;">
+        <span style="font-family:'Space Mono',monospace;font-size:13px;color:#A15A38;">04</span>
+        <div><h3 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(26px,3.4vw,40px);margin:0 0 6px;">Remodeling</h3><p style="font-size:15px;line-height:1.6;color:#4b463c;margin:0;max-width:56ch;">Refresh an existing kitchen, bath, or commercial space with countertops that bring it new life.</p></div>
+        <span style="font-size:22px;color:#A15A38;">&rarr;</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============ GALLERY ============ -->
+  <section id="gallery" style="padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);max-width:1400px;margin:0 auto;">
+    <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:clamp(36px,4vw,56px);">
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">Project gallery</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(34px,5.2vw,64px);line-height:1;letter-spacing:-.015em;margin:16px 0 0;">Recent installs.</h2>
+      </div>
+      <a href="https://www.instagram.com/premier_countertops" style="font-family:'Space Mono',monospace;font-size:13px;letter-spacing:.08em;border-bottom:1px solid #A15A38;padding-bottom:3px;">@premier_countertops &rarr;</a>
+    </div>
+    <div data-gallery style="display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:200px;gap:clamp(10px,1.2vw,16px);">
+      <div style="grid-column:span 2;grid-row:span 2;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g1" shape="rect" placeholder="Kitchen install &mdash; wide"></image-slot></div>
+      <div style="grid-column:span 2;grid-row:span 1;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g2" shape="rect" placeholder="Waterfall island"></image-slot></div>
+      <div style="grid-column:span 1;grid-row:span 1;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g3" shape="rect" placeholder="Bath vanity"></image-slot></div>
+      <div style="grid-column:span 1;grid-row:span 1;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g4" shape="rect" placeholder="Edge detail"></image-slot></div>
+      <div style="grid-column:span 2;grid-row:span 1;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g5" shape="rect" placeholder="Full kitchen"></image-slot></div>
+      <div style="grid-column:span 1;grid-row:span 1;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g6" shape="rect" placeholder="Sink cutout"></image-slot></div>
+      <div style="grid-column:span 1;grid-row:span 1;position:relative;border-radius:12px;overflow:hidden;"><image-slot id="pt-g7" shape="rect" placeholder="Backsplash"></image-slot></div>
+    </div>
+  </section>
+
+  <!-- ============ TESTIMONIALS ============ -->
+  <section style="background:#1E1B16;color:#F4F0E8;padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);">
+    <div style="max-width:1400px;margin:0 auto;">
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#C98A63;">Testimonials</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(24px,3vw,48px);margin-top:clamp(36px,4vw,56px);">
+        <figure data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1),transform .8s cubic-bezier(.2,.7,.2,1);margin:0;">
+          <div style="color:#C98A63;letter-spacing:.15em;font-size:15px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <blockquote style="font-family:'Cormorant Garamond',serif;font-size:clamp(22px,2.4vw,30px);line-height:1.25;margin:18px 0 0;">&ldquo;From designing the template, to fabrication, to install &mdash; every one of their staff is top notch. Professional and precise. My highest recommendation.&rdquo;</blockquote>
+          <figcaption style="margin-top:22px;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.1em;color:#9a9384;">SHARON YOUNG &middot; CLIENT</figcaption>
+        </figure>
+        <figure data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .1s,transform .8s cubic-bezier(.2,.7,.2,1) .1s;margin:0;">
+          <div style="color:#C98A63;letter-spacing:.15em;font-size:15px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <blockquote style="font-family:'Cormorant Garamond',serif;font-size:clamp(22px,2.4vw,30px);line-height:1.25;margin:18px 0 0;">&ldquo;We were 100% satisfied. The crew who installed our countertops was polite, professional, and knowledgeable. Several months later, still completely satisfied. 5 stars!&rdquo;</blockquote>
+          <figcaption style="margin-top:22px;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.1em;color:#9a9384;">HEATHER STILES &middot; CLIENT</figcaption>
+        </figure>
+        <figure data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .8s cubic-bezier(.2,.7,.2,1) .2s,transform .8s cubic-bezier(.2,.7,.2,1) .2s;margin:0;">
+          <div style="color:#C98A63;letter-spacing:.15em;font-size:15px;">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <blockquote style="font-family:'Cormorant Garamond',serif;font-size:clamp(22px,2.4vw,30px);line-height:1.25;margin:18px 0 0;">&ldquo;Wonderful place with very nice and polite employees. Five-star products and services. I highly recommend stopping by to see the amazing inventory.&rdquo;</blockquote>
+          <figcaption style="margin-top:22px;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.1em;color:#9a9384;">CHARLIE McMANN &middot; CLIENT</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUOTE / CONTACT ============ -->
+  <section id="quote" style="padding:clamp(80px,12vw,160px) clamp(20px,5vw,64px);max-width:1400px;margin:0 auto;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(40px,6vw,90px);align-items:start;">
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);">
+        <div style="font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:#A15A38;">Let's begin</div>
+        <h2 style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(38px,5.6vw,72px);line-height:.98;letter-spacing:-.015em;margin:16px 0 0;">Request a<br>free quote.</h2>
+        <p style="font-size:16px;line-height:1.7;color:#4b463c;margin:24px 0 0;max-width:420px;">Tell us about your project and we'll be in touch. Or stop by the showroom &mdash; the coffee's on us.</p>
+        <div style="margin-top:40px;display:flex;flex-direction:column;gap:22px;">
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#8a8271;">SHOWROOM</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-size:23px;margin-top:4px;">2341 Graham Dr., Tupelo, MS 38801</div>
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#8a8271;">CALL</div>
+            <a href="tel:6628238824" style="font-family:'Cormorant Garamond',serif;font-size:23px;margin-top:4px;display:inline-block;">662.823.8824</a>
+          </div>
+          <div>
+            <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#8a8271;">HOURS</div>
+            <div style="font-size:15px;line-height:1.7;color:#4b463c;margin-top:4px;">Mon&ndash;Fri 8am&ndash;5pm &middot; Sat by appointment &middot; Sun closed</div>
+          </div>
+        </div>
+      </div>
+
+      <div data-reveal style="opacity:0;transform:translateY(20px);transition:opacity .9s cubic-bezier(.2,.7,.2,1) .1s,transform .9s cubic-bezier(.2,.7,.2,1) .1s;background:#EDE7DA;border-radius:16px;padding:clamp(26px,3.4vw,46px);">
+        <sc-if value="{{ submitted }}" hint-placeholder-val="{{ false }}">
+          <div style="min-height:360px;display:flex;flex-direction:column;justify-content:center;text-align:center;">
+            <div style="font-family:'Cormorant Garamond',serif;font-size:40px;line-height:1.05;">Thank you.</div>
+            <p style="font-size:16px;line-height:1.6;color:#4b463c;margin:16px auto 0;max-width:34ch;">We've got your request. A Premier consultant will reach out within one business day.</p>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notSubmitted }}" hint-placeholder-val="{{ true }}">
+          <form onSubmit="{{ submit }}" style="display:flex;flex-direction:column;gap:16px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a8271;">FIRST NAME*</span><input required style="background:#F8F4EC;border:1px solid rgba(30,27,22,.16);border-radius:8px;padding:13px 14px;font-size:15px;color:#1E1B16;outline:none;"></label>
+              <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a8271;">LAST NAME*</span><input required style="background:#F8F4EC;border:1px solid rgba(30,27,22,.16);border-radius:8px;padding:13px 14px;font-size:15px;color:#1E1B16;outline:none;"></label>
+            </div>
+            <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a8271;">EMAIL*</span><input required type="email" style="background:#F8F4EC;border:1px solid rgba(30,27,22,.16);border-radius:8px;padding:13px 14px;font-size:15px;color:#1E1B16;outline:none;"></label>
+            <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a8271;">PHONE*</span><input required type="tel" style="background:#F8F4EC;border:1px solid rgba(30,27,22,.16);border-radius:8px;padding:13px 14px;font-size:15px;color:#1E1B16;outline:none;"></label>
+            <label style="display:flex;flex-direction:column;gap:7px;"><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.12em;color:#8a8271;">TELL US ABOUT YOUR PROJECT</span><textarea rows="4" style="background:#F8F4EC;border:1px solid rgba(30,27,22,.16);border-radius:8px;padding:13px 14px;font-size:15px;color:#1E1B16;outline:none;resize:vertical;"></textarea></label>
+            <button type="submit" style="margin-top:6px;background:#1E1B16;color:#F8F4EC;border:none;padding:16px;border-radius:100px;font-size:14px;font-weight:600;letter-spacing:.02em;cursor:pointer;transition:background .3s;" style-hover="background:#A15A38;">Send my request &rarr;</button>
+          </form>
+        </sc-if>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer style="background:#141210;color:#c9c3b6;padding:clamp(60px,8vw,110px) clamp(20px,5vw,64px) 40px;">
+    <div style="max-width:1400px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:44px;">
+      <div style="grid-column:1/-1;">
+        <div style="font-family:'Cormorant Garamond',serif;font-weight:600;font-size:clamp(40px,7vw,88px);line-height:1;color:#F4F0E8;letter-spacing:-.01em;">Premier Countertops<span style="color:#A15A38;">.</span></div>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7a746a;">VISIT</div>
+        <p style="font-size:15px;line-height:1.7;margin:12px 0 0;">2341 Graham Dr.<br>Tupelo, MS 38801</p>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7a746a;">CONTACT</div>
+        <p style="font-size:15px;line-height:1.7;margin:12px 0 0;"><a href="tel:6628238824">662.823.8824</a><br><a href="mailto:alexis@premiertops.com">alexis@premiertops.com</a></p>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7a746a;">HOURS</div>
+        <p style="font-size:15px;line-height:1.7;margin:12px 0 0;">Mon&ndash;Fri 8&ndash;5<br>Sat by appt.</p>
+      </div>
+      <div>
+        <div style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.14em;color:#7a746a;">FOLLOW</div>
+        <p style="font-size:15px;line-height:1.7;margin:12px 0 0;"><a href="https://www.instagram.com/premier_countertops">@premier_countertops</a></p>
+      </div>
+    </div>
+    <div style="max-width:1400px;margin:60px auto 0;padding-top:26px;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;color:#7a746a;">
+      <span>&copy; 2026 PREMIER COUNTERTOPS &mdash; TUPELO, MISSISSIPPI</span>
+      <span>ELEVATING YOUR COUNTERTOPS SINCE 2003</span>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;heroMaterial&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Calacatta White&quot;,&quot;Fantasy Brown&quot;,&quot;Black Mist&quot;,&quot;Butcher Block&quot;],&quot;default&quot;:&quot;Calacatta White&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero 3D&quot;},
+  &quot;cabinetColor&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Sage&quot;,&quot;Warm White&quot;,&quot;Walnut&quot;],&quot;default&quot;:&quot;Sage&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero 3D&quot;},
+  &quot;daylight&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Warm&quot;,&quot;Cool&quot;,&quot;Golden Hour&quot;],&quot;default&quot;:&quot;Warm&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Hero 3D&quot;}
+}">
+class Component extends DCLogic {
+  state = { menuOpen:false, submitted:false };
+  canvasEl=null; navEl=null; trackEl=null; scanEl=null;
+  three={ready:false};
+  targetP=0; curP=0;
+
+  setCanvas=(el)=>{ this.canvasEl=el; };
+  setNav=(el)=>{ this.navEl=el; };
+  setTrack=(el)=>{ this.trackEl=el; };
+  setScan=(el)=>{ this.scanEl=el; };
+  toggleMenu=()=>this.setState(s=>({menuOpen:!s.menuOpen}));
+  closeMenu=()=>this.setState({menuOpen:false});
+  submit=(e)=>{ if(e&&e.preventDefault)e.preventDefault(); this.setState({submitted:true}); };
+
+  stonePresets={
+    'Shadow Storm':{base:'#4c4f54',vein:'#e7e6e1',vein2:'#9aa0a0',cloud:'#3c3f43',veins:5},
+    'Fantasy Brown':{base:'#b3a48b',vein:'#6b5942',vein2:'#8fa093',cloud:'#c9bda6',veins:6},
+    'Taj Mahal':{base:'#e6dcc4',vein:'#c3a87c',vein2:'#d8c9a8',cloud:'#efe8d6',veins:4},
+    'Le Blanc':{base:'#edefe9',vein:'#c4c8c2',vein2:'#b3b8b2',cloud:'#f6f6f1',veins:3},
+    'White Rhino':{base:'#e6e6df',vein:'#adb1ac',vein2:'#c7c9c3',cloud:'#f0f0ea',veins:4},
+    'Black Mist':{base:'#24251f',vein:'#5c6058',vein2:'#3a3c35',cloud:'#1a1b16',veins:4},
+    'Bianco Marina':{base:'#eeefe8',vein:'#cdd0c9',vein2:'#dbdcd4',cloud:'#f6f6f0',veins:3},
+    'Ostara Dawn':{base:'#ece3d2',vein:'#c9b085',vein2:'#dccdb0',cloud:'#f2ecdd',veins:3},
+    'Calacatta Idillio':{base:'#f0eee7',vein:'#8b8e92',vein2:'#c6ab78',cloud:'#f7f5ef',veins:5},
+    'Calacatta Miraggio Duo':{base:'#edece5',vein:'#7d8084',vein2:'#a9aca8',cloud:'#f5f4ee',veins:5},
+    'Lien Azul':{base:'#e9ebe9',vein:'#7a8b98',vein2:'#a5b1b6',cloud:'#f2f3f1',veins:4},
+    'Woodcroft':{base:'#d7ccb6',vein:'#9a8968',vein2:'#b7a888',cloud:'#e0d7c4',veins:4}
+  };
+  heroPresets={
+    'Calacatta White':{base:'#f1efe8',vein:'#787c82',vein2:'#bfa06a',cloud:'#f8f6f1',veins:8},
+    'Fantasy Brown':{base:'#b3a48b',vein:'#6b5942',vein2:'#8fa093',cloud:'#c9bda6',veins:6},
+    'Black Mist':{base:'#24251f',vein:'#5c6058',vein2:'#3a3c35',cloud:'#1a1b16',veins:4},
+    'Butcher Block':{base:'#b07a3f',vein:'#7c4d20',vein2:'#c99a5c',cloud:'#9c6530',mode:'wood'}
+  };
+  cabPresets={ 'Sage':'#5e6c4a','Warm White':'#e3dccb','Walnut':'#5b3f28' };
+  dayPresets={
+    'Warm':{key:'#ffe9cf',ki:2.5,hemiSky:'#fff3e2',hemiG:'#8a7f6f',hemiI:0.55,exp:1.06,win:'#fff2da'},
+    'Cool':{key:'#eef2ff',ki:2.3,hemiSky:'#eef2fb',hemiG:'#8b8b95',hemiI:0.6,exp:1.0,win:'#eaf1ff'},
+    'Golden Hour':{key:'#ffcf95',ki:2.9,hemiSky:'#ffe6c4',hemiG:'#7a6a52',hemiI:0.5,exp:1.14,win:'#ffdda6'}
+  };
+
+  componentDidMount(){
+    this.raf=requestAnimationFrame(this.loop);
+    this.ensureThree(()=>{ try{ this.initThree(); }catch(e){ console.error('INIT_FAIL:', (e&&e.message)||e, (e&&e.stack||'').split('\n').slice(0,5).join(' | ')); } });
+    this.buildSwatches();
+    this.io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.style.opacity='1';e.target.style.transform='none';this.io.unobserve(e.target);}});},{threshold:0.12,rootMargin:'0px 0px -8% 0px'});
+    document.querySelectorAll('[data-reveal]').forEach(el=>this.io.observe(el));
+    this.onResize=()=>this.resize();
+    window.addEventListener('resize',this.onResize);
+  }
+  componentWillUnmount(){
+    cancelAnimationFrame(this.raf);
+    window.removeEventListener('resize',this.onResize);
+    if(this.io)this.io.disconnect();
+  }
+  componentDidUpdate(prev){
+    if(this.three.ready && prev && (prev.heroMaterial!==this.props.heroMaterial||prev.cabinetColor!==this.props.cabinetColor||prev.daylight!==this.props.daylight)){
+      this.applyTweaks();
+    }
+  }
+
+  ensureThree(cb){
+    if(window.THREE){cb();return;}
+    let n=0; const t=setInterval(()=>{ if(window.THREE||n++>120){ clearInterval(t); if(window.THREE)cb(); } },40);
+  }
+
+  /* ---------- texture helpers ---------- */
+  hexA(hex,a){const h=hex.replace('#','');return `rgba(${parseInt(h.substr(0,2),16)},${parseInt(h.substr(2,2),16)},${parseInt(h.substr(4,2),16)},${a})`;}
+  vein(g,S,color,alpha,thin){
+    let x,y;
+    if(Math.random()<0.5){ x=Math.random()*S; y=Math.random()<0.5?-10:S+10; }
+    else { x=Math.random()<0.5?-10:S+10; y=Math.random()*S; }
+    let ang=Math.atan2(S/2-y,S/2-x)+(Math.random()-0.5)*1.1;
+    const w=thin?0.7+Math.random()*0.8:3.4+Math.random()*4.8;
+    g.strokeStyle=this.hexA(color,alpha); g.lineWidth=w; g.lineJoin='round'; g.lineCap='round';
+    g.beginPath(); g.moveTo(x,y);
+    const steps=70+Math.random()*50;
+    for(let s=0;s<steps;s++){
+      ang+=(Math.random()-0.5)*0.5; const len=8+Math.random()*10;
+      x+=Math.cos(ang)*len; y+=Math.sin(ang)*len; g.lineTo(x,y);
+      if(!thin&&Math.random()<0.05){ this.branch(g,x,y,ang+(Math.random()-0.5)*1.4,color,alpha*0.55,w*0.5); }
+      if(x<-60||x>S+60||y<-60||y>S+60)break;
+    }
+    g.stroke();
+  }
+  branch(g,x,y,ang,color,alpha,w){
+    g.strokeStyle=this.hexA(color,alpha); g.lineWidth=Math.max(0.5,w); g.beginPath(); g.moveTo(x,y);
+    for(let s=0;s<22;s++){ ang+=(Math.random()-0.5)*0.7; x+=Math.cos(ang)*7; y+=Math.sin(ang)*7; g.lineTo(x,y); }
+    g.stroke();
+  }
+  makeStoneCanvas(o){
+    const S=1024, c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
+    g.fillStyle=o.base; g.fillRect(0,0,S,S);
+    for(let i=0;i<30;i++){
+      const r=140+Math.random()*280, x=Math.random()*S, y=Math.random()*S;
+      const rg=g.createRadialGradient(x,y,0,x,y,r); const col=o.cloud||o.vein2||o.vein;
+      rg.addColorStop(0,this.hexA(col,0.05+Math.random()*0.07)); rg.addColorStop(1,this.hexA(col,0));
+      g.fillStyle=rg; g.fillRect(0,0,S,S);
+    }
+    if(o.mode==='wood'){
+      for(let i=0;i<80;i++){
+        const y=Math.random()*S; g.strokeStyle=this.hexA(Math.random()<0.5?o.vein:o.vein2,0.04+Math.random()*0.11);
+        g.lineWidth=0.5+Math.random()*2.6; g.beginPath(); g.moveTo(0,y); let yy=y;
+        for(let xx=0;xx<=S;xx+=30){ yy+=(Math.random()-0.5)*7; g.lineTo(xx,yy); } g.stroke();
+      }
+    } else {
+      const n=o.veins||5;
+      for(let i=0;i<n;i++) this.vein(g,S,i%2?o.vein2:o.vein,0.9);
+      for(let i=0;i<n*3;i++) this.vein(g,S,o.vein2||o.vein,0.32,true);
+    }
+    return c;
+  }
+  makeTex(canvas,ru,rv,ou,ov){
+    const t=new THREE.CanvasTexture(canvas);
+    t.wrapS=t.wrapT=THREE.RepeatWrapping;
+    t.repeat.set(ru,rv); t.offset.set(ou,ov);
+    t.anisotropy=this.three.maxAniso||8; t.encoding=THREE.sRGBEncoding;
+    return t;
+  }
+  buildSwatches(){
+    document.querySelectorAll('[data-swatch]').forEach(el=>{
+      const p=this.stonePresets[el.getAttribute('data-kind')]; if(!p)return;
+      try{ const cv=this.makeStoneCanvas(p); el.style.backgroundImage=`url(${cv.toDataURL()})`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; }catch(e){}
+    });
+  }
+
+  /* ---------- three.js scene ---------- */
+  initThree(){
+    const T=THREE, cv=this.canvasEl; if(!cv)return;
+    const renderer=new T.WebGLRenderer({canvas:cv,antialias:true,preserveDrawingBuffer:true});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+    renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFSoftShadowMap;
+    renderer.outputEncoding=T.sRGBEncoding; renderer.toneMapping=T.ACESFilmicToneMapping; renderer.toneMappingExposure=1.06;
+    const scene=new T.Scene();
+    const camera=new T.PerspectiveCamera(40,1,0.1,100);
+    this.three.maxAniso=renderer.capabilities.getMaxAnisotropy();
+
+    // background gradient
+    const bgc=document.createElement('canvas'); bgc.width=8; bgc.height=256; const bg=bgc.getContext('2d');
+    const bgrad=bg.createLinearGradient(0,0,0,256); bgrad.addColorStop(0,'#f7f3eb'); bgrad.addColorStop(0.6,'#e9e1d1'); bgrad.addColorStop(1,'#dacfba');
+    bg.fillStyle=bgrad; bg.fillRect(0,0,8,256);
+    const bgTex=new T.CanvasTexture(bgc); bgTex.encoding=T.sRGBEncoding; scene.background=bgTex;
+    scene.fog=new T.Fog(0xe7dfce,7,20);
+
+    // environment for reflections
+    const ec=document.createElement('canvas'); ec.width=1024; ec.height=512; const eg=ec.getContext('2d');
+    const eGrad=eg.createLinearGradient(0,0,0,512); eGrad.addColorStop(0,'#fff7ec'); eGrad.addColorStop(0.45,'#efe9de'); eGrad.addColorStop(1,'#b6afa1');
+    eg.fillStyle=eGrad; eg.fillRect(0,0,1024,512);
+    const disc=eg.createRadialGradient(320,150,10,320,150,180); disc.addColorStop(0,'rgba(255,255,255,0.95)'); disc.addColorStop(1,'rgba(255,255,255,0)');
+    eg.fillStyle=disc; eg.fillRect(0,0,1024,512);
+    const disc2=eg.createRadialGradient(760,120,10,760,120,120); disc2.addColorStop(0,'rgba(255,255,255,0.55)'); disc2.addColorStop(1,'rgba(255,255,255,0)');
+    eg.fillStyle=disc2; eg.fillRect(0,0,1024,512);
+    const envTex=new T.CanvasTexture(ec); envTex.mapping=T.EquirectangularReflectionMapping;
+    const pmrem=new T.PMREMGenerator(renderer); scene.environment=pmrem.fromEquirectangular(envTex).texture; envTex.dispose();
+
+    // lights
+    const hemi=new T.HemisphereLight(0xfff3e2,0x8a7f6f,0.55); scene.add(hemi);
+    const key=new T.DirectionalLight(0xffe9cf,2.5); key.position.set(3.6,6,4); key.castShadow=true;
+    key.shadow.mapSize.set(2048,2048); key.shadow.camera.near=1; key.shadow.camera.far=22;
+    key.shadow.camera.left=-4; key.shadow.camera.right=4; key.shadow.camera.top=4; key.shadow.camera.bottom=-4; key.shadow.bias=-0.0004;
+    scene.add(key);
+    const fill=new T.DirectionalLight(0xdfe6ff,0.45); fill.position.set(-4,3,-2); scene.add(fill);
+    const glint=new T.PointLight(0xfff4e2,0,3); glint.position.set(0,1.1,0.5); scene.add(glint);
+
+    // ground (shadow receiver, color lerps studio->oak)
+    const ground=new T.Mesh(new T.PlaneGeometry(40,40), new T.MeshStandardMaterial({color:0xdcd2c0,roughness:0.95,metalness:0}));
+    ground.rotation.x=-Math.PI/2; ground.position.y=0; ground.receiveShadow=true; scene.add(ground);
+
+    // ---- cabinets ----
+    const cabGroup=new T.Group();
+    const cabMat=new T.MeshStandardMaterial({color:0x6d7a61,roughness:0.6,metalness:0.02,envMapIntensity:0.45});
+    const L=3.0, D=0.64, cabH=0.8, cabY0=0.10;
+    const carcass=new T.Mesh(new T.BoxGeometry(L,cabH,D),cabMat);
+    carcass.position.set(0,cabY0+cabH/2,0.01); carcass.castShadow=true; carcass.receiveShadow=true; cabGroup.add(carcass);
+    const kick=new T.Mesh(new T.BoxGeometry(L-0.1,0.1,D-0.08), new T.MeshStandardMaterial({color:0x2c2a26,roughness:0.8}));
+    kick.position.set(0,0.05,-0.02); cabGroup.add(kick);
+    const doorMat=cabMat;
+    const pull=new T.MeshStandardMaterial({color:0xcaa46a,roughness:0.35,metalness:0.85});
+    const nDoors=6, gap=0.02, dw=(L-gap*(nDoors+1))/nDoors, dh=cabH-0.12, dz=D/2+0.01;
+    for(let i=0;i<nDoors;i++){
+      const x=-L/2+gap+dw/2+i*(dw+gap);
+      const door=new T.Mesh(new T.BoxGeometry(dw,dh,0.03),doorMat);
+      door.position.set(x,cabY0+cabH/2,dz); door.castShadow=true; cabGroup.add(door);
+      const bar=new T.Mesh(new T.BoxGeometry(0.012,0.16,0.02),pull);
+      bar.position.set(x+ (i%2? -dw/2+0.05 : dw/2-0.05), cabY0+cabH/2+0.18, dz+0.02); cabGroup.add(bar);
+    }
+    scene.add(cabGroup);
+
+    // ---- countertop slab (frame around sink cutout, continuous marble) ----
+    const slabGroup=new T.Group();
+    const topY=0.92, th=0.045;
+    const hx0=-0.38,hx1=0.38,hz0=0.0,hz1=0.28;      // sink hole
+    const X0=-1.52,X1=1.52,Z0=-0.34,Z1=0.36;         // slab extents (overhang)
+    const totW=X1-X0, totD=Z1-Z0;
+    this.slabCanvas=this.makeStoneCanvas(this.heroPresets['Calacatta White']);
+    const pieces=[
+      [X0,X1,Z0,hz0],   // back
+      [X0,X1,hz1,Z1],   // front lip
+      [X0,hx0,hz0,hz1], // left
+      [hx1,X1,hz0,hz1]  // right
+    ];
+    this.slabMats=[]; this.slabTexs=[];
+    pieces.forEach(p=>{
+      const [x0,x1,z0,z1]=p, w=x1-x0, d=z1-z0;
+      const tex=this.makeTex(this.slabCanvas, w/totW, d/totD, (x0-X0)/totW, (z0-Z0)/totD);
+      const mat=new T.MeshPhysicalMaterial({map:tex,color:0xffffff,roughness:0.14,metalness:0,clearcoat:1,clearcoatRoughness:0.08,envMapIntensity:0.9});
+      const m=new T.Mesh(new T.BoxGeometry(w,th,d),mat);
+      m.position.set((x0+x1)/2,topY+th/2,(z0+z1)/2); m.castShadow=true; m.receiveShadow=true;
+      slabGroup.add(m); this.slabMats.push(mat); this.slabTexs.push(tex);
+    });
+    scene.add(slabGroup);
+
+    // ---- backsplash (marble, rises) ----
+    const bsGroup=new T.Group(); bsGroup.position.set(0,topY+th,-0.34);
+    const bsCanvas=this.slabCanvas;
+    const bsTex=this.makeTex(bsCanvas,1,0.28,0,0);
+    const bsMat=new T.MeshPhysicalMaterial({map:bsTex,color:0xffffff,roughness:0.16,metalness:0,clearcoat:0.8,clearcoatRoughness:0.12,envMapIntensity:0.8,transparent:true});
+    const bs=new T.Mesh(new T.BoxGeometry(totW,0.5,0.03),bsMat); bs.position.set(0,0.25,0); bs.castShadow=true; bsGroup.add(bs);
+    bsGroup.scale.y=0.001; scene.add(bsGroup); this.slabTexs.push(bsTex); this.slabMats.push(bsMat); this.bsMat=bsMat;
+
+    // ---- sink + faucet (drop in) ----
+    const sinkGroup=new T.Group();
+    const basinMat=new T.MeshStandardMaterial({color:0x2b2d2c,roughness:0.5,metalness:0.55});
+    const basin=new T.Mesh(new T.BoxGeometry(0.7,0.22,0.30),basinMat);
+    basin.position.set(0,topY-0.10,0.14); basin.castShadow=true; basin.receiveShadow=true; sinkGroup.add(basin);
+    const inner=new T.Mesh(new T.BoxGeometry(0.64,0.2,0.26),new T.MeshStandardMaterial({color:0x3a3c3b,roughness:0.35,metalness:0.7}));
+    inner.position.set(0,topY-0.08,0.14); sinkGroup.add(inner);
+    const steel=new T.MeshStandardMaterial({color:0xd7d9da,roughness:0.28,metalness:0.95,envMapIntensity:1});
+    const fBase=new T.Mesh(new T.CylinderGeometry(0.035,0.045,0.05,20),steel); fBase.position.set(0,topY+0.05,-0.02); sinkGroup.add(fBase);
+    const fRise=new T.Mesh(new T.CylinderGeometry(0.022,0.024,0.30,20),steel); fRise.position.set(0,topY+0.20,-0.02); sinkGroup.add(fRise);
+    const fArc=new T.Mesh(new T.TorusGeometry(0.09,0.022,16,24,Math.PI*0.85),steel); fArc.position.set(0,topY+0.35,-0.02); fArc.rotation.z=-Math.PI*0.05; sinkGroup.add(fArc);
+    const fSpout=new T.Mesh(new T.CylinderGeometry(0.02,0.02,0.06,16),steel); fSpout.position.set(0.085,topY+0.34,0.03); sinkGroup.add(fSpout);
+    sinkGroup.traverse(o=>{o.castShadow=true;});
+    sinkGroup.visible=false; scene.add(sinkGroup);
+
+    // ---- kitchen reveal group ----
+    const kitchen=new T.Group();
+    const wallMat=new T.MeshStandardMaterial({color:0xe7dccb,roughness:0.95,transparent:true,opacity:0});
+    const wall=new T.Mesh(new T.PlaneGeometry(9,3.6),wallMat); wall.position.set(0,1.4,-0.44); wall.receiveShadow=true; kitchen.add(wall);
+    const winMat=new T.MeshBasicMaterial({color:0xfff2da,transparent:true,opacity:0});
+    const win=new T.Mesh(new T.PlaneGeometry(1.9,1.35),winMat); win.position.set(-0.15,1.72,-0.43); kitchen.add(win);
+    const frameMat=new T.MeshStandardMaterial({color:0x3a352c,roughness:0.6,transparent:true,opacity:0});
+    const mkBar=(w,h,x,y)=>{const b=new T.Mesh(new T.BoxGeometry(w,h,0.04),frameMat); b.position.set(x,y,-0.42); kitchen.add(b); return b;};
+    mkBar(2.02,0.06,-0.15,2.40); mkBar(2.02,0.06,-0.15,1.05); mkBar(0.06,1.4,-1.12,1.72); mkBar(0.06,1.4,0.82,1.72); mkBar(0.05,1.4,-0.15,1.72); mkBar(2.0,0.05,-0.15,1.72);
+    const shelfMat=new T.MeshStandardMaterial({color:0x6a4a2c,roughness:0.6,transparent:true,opacity:0});
+    [1.55,1.95].forEach(y=>{ const sh=new T.Mesh(new T.BoxGeometry(1.1,0.04,0.24),shelfMat); sh.position.set(0.95,y,-0.28); sh.castShadow=true; kitchen.add(sh); });
+    kitchen.traverse(o=>{ if(o.material)o.material.transparent=true; });
+    scene.add(kitchen);
+
+    // camera keyframes
+    const K=[
+      {p:0.00,pos:[2.7,1.9,3.5],tgt:[0,0.85,0.02]},
+      {p:0.15,pos:[0.15,2.75,2.05],tgt:[0,0.9,0.06]},
+      {p:0.37,pos:[2.5,1.75,2.9],tgt:[0,1.02,0.02]},
+      {p:0.55,pos:[1.35,1.12,1.72],tgt:[0.35,0.95,0.30]},
+      {p:0.70,pos:[0.45,1.95,1.55],tgt:[0.0,0.96,0.10]},
+      {p:0.86,pos:[2.7,1.75,3.15],tgt:[0,1.02,-0.04]},
+      {p:1.00,pos:[3.15,1.95,3.7],tgt:[0,1.05,-0.10]}
+    ];
+
+    Object.assign(this.three,{renderer,scene,camera,pmrem,bgTex,bgc,hemi,key,fill,glint,ground,cabMat,cabGroup,slabGroup,bsGroup,bsMat,sinkGroup,kitchen,wall,win,winMat,frameMat,shelfMat,K,topY,ready:true});
+    this.resize();
+    this.applyTweaks();
+    this.setProgress(0);
+    renderer.render(scene,camera);
+  }
+
+  applyTweaks(){
+    if(!this.three.ready)return; const T=THREE;
+    const hp=this.heroPresets[this.props.heroMaterial]||this.heroPresets['Calacatta White'];
+    const cab=this.cabPresets[this.props.cabinetColor]||this.cabPresets['Sage'];
+    const day=this.dayPresets[this.props.daylight]||this.dayPresets['Warm'];
+    // slab material
+    try{ this.slabCanvas.getContext('2d'); }catch(e){}
+    const fresh=this.makeStoneCanvas(hp);
+    const ctx=this.slabCanvas.getContext('2d'); ctx.clearRect(0,0,1024,1024); ctx.drawImage(fresh,0,0);
+    const wood=hp.mode==='wood', dark=this.props.heroMaterial==='Black Mist';
+    this.slabTexs.forEach(t=>{ t.needsUpdate=true; });
+    this.slabMats.forEach(m=>{ m.roughness=wood?0.5:0.14; m.clearcoat=wood?0.3:1; m.clearcoatRoughness=wood?0.4:0.08; m.envMapIntensity=dark?0.6:0.9; m.needsUpdate=true; });
+    // cabinets
+    this.three.cabMat.color.set(cab);
+    // lights + mood
+    this.three.key.color.set(day.key); this.three.key.intensity=day.ki;
+    this.three.hemi.color.set(day.hemiSky); this.three.hemi.groundColor.set(day.hemiG); this.three.hemi.intensity=day.hemiI;
+    this.three.renderer.toneMappingExposure=day.exp;
+    this.three.winMat.color.set(day.win);
+  }
+
+  smooth(a,b,t){ t=Math.min(1,Math.max(0,(t-a)/(b-a))); return t*t*(3-2*t); }
+  lerp(a,b,t){ return a+(b-a)*t; }
+
+  setProgress(p){
+    if(!this.three.ready)return; const T=THREE, tp=this.three;
+    // slab lowers
+    const slabT=this.smooth(0.24,0.42,p);
+    tp.slabGroup.position.y=this.lerp(1.4,0,slabT);
+    tp.slabGroup.visible=p>0.19;
+    // edge glint travels
+    const gT=this.smooth(0.48,0.50,p)*(1-this.smooth(0.60,0.62,p));
+    tp.glint.intensity=gT*2.4;
+    tp.glint.position.set(this.lerp(-1.2,1.2,this.smooth(0.48,0.62,p)),tp.topY+0.12,0.42);
+    // sink drops in
+    tp.sinkGroup.visible=p>0.58;
+    tp.sinkGroup.position.y=this.lerp(1.0,0,this.smooth(0.62,0.74,p));
+    // backsplash rises
+    tp.bsGroup.scale.y=Math.max(0.001,this.smooth(0.76,0.87,p));
+    tp.bsMat.opacity=this.smooth(0.76,0.83,p);
+    // kitchen reveal
+    const kT=this.smooth(0.80,0.98,p);
+    tp.kitchen.traverse(o=>{ if(o.material){ o.material.opacity=(o===tp.win?kT:kT*0.98); } });
+    tp.ground.material.color.setRGB(
+      this.lerp(0.862,0.53,kT), this.lerp(0.824,0.37,kT), this.lerp(0.752,0.24,kT)
+    );
+    tp.scene.fog.near=this.lerp(7,9,kT);
+    // camera
+    this.camAt(p);
+  }
+  camAt(p){
+    const K=this.three.K, cam=this.three.camera;
+    let i=0; while(i<K.length-1 && p>K[i+1].p) i++;
+    const a=K[i], b=K[Math.min(i+1,K.length-1)];
+    const seg=b.p===a.p?0:(p-a.p)/(b.p-a.p); const t=Math.min(1,Math.max(0,seg)); const s=t*t*(3-2*t);
+    cam.position.set(this.lerp(a.pos[0],b.pos[0],s),this.lerp(a.pos[1],b.pos[1],s),this.lerp(a.pos[2],b.pos[2],s));
+    this._tx=this.lerp(a.tgt[0],b.tgt[0],s); this._ty=this.lerp(a.tgt[1],b.tgt[1],s); this._tz=this.lerp(a.tgt[2],b.tgt[2],s);
+    cam.lookAt(this._tx,this._ty,this._tz);
+  }
+
+  updateOverlays(p){
+    const vis=(a,b)=>{ const f=0.03; if(p<a-f||p>b+f)return 0; if(p<a)return (p-(a-f))/f; if(p>b)return Math.max(0,1-(p-b)/f); return 1; };
+    document.querySelectorAll('[data-cap]').forEach(el=>{
+      const a=parseFloat(el.getAttribute('data-a')), b=parseFloat(el.getAttribute('data-b'));
+      const o=vis(a,b); el.style.opacity=o; el.style.transform=`translateY(${(1-o)*14}px)`; el.style.pointerEvents=o>0.6?'auto':'none';
+    });
+    if(this.scanEl){ const st=this.smooth(0.085,0.215,p); this.scanEl.style.top=`${this.lerp(6,94,st)}%`; }
+    let active=-1;
+    if(p>=0.06&&p<0.26)active=0; else if(p>=0.26&&p<0.46)active=1; else if(p>=0.46&&p<0.63)active=2; else if(p>=0.63&&p<0.80)active=3;
+    document.querySelectorAll('[data-rail]').forEach(el=>{ const on=parseInt(el.getAttribute('data-rail'))===active; el.style.opacity=on?1:0.32; el.style.color=on?'#A15A38':'#1E1B16'; });
+  }
+  updateNav(){
+    if(!this.navEl)return; const solid=window.scrollY>60;
+    this.navEl.style.background=solid?'rgba(244,240,232,0.82)':'transparent';
+    this.navEl.style.backdropFilter=solid?'blur(12px)':'none';
+    this.navEl.style.webkitBackdropFilter=solid?'blur(12px)':'none';
+    this.navEl.style.borderBottomColor=solid?'rgba(30,27,22,0.08)':'transparent';
+    this.navEl.style.paddingTop=solid?'13px':'20px'; this.navEl.style.paddingBottom=solid?'13px':'20px';
+  }
+  resize(){
+    if(!this.three.ready||!this.canvasEl)return;
+    const w=this.canvasEl.clientWidth||window.innerWidth, h=this.canvasEl.clientHeight||window.innerHeight;
+    this.three.renderer.setSize(w,h,false); this.three.camera.aspect=w/h; this.three.camera.updateProjectionMatrix();
+  }
+  loop=()=>{
+    if(this.trackEl){
+      const total=this.trackEl.offsetHeight-window.innerHeight;
+      const rt=this.trackEl.getBoundingClientRect().top;
+      this.targetP=Math.min(1,Math.max(0, total>0? -rt/total : 0));
+    }
+    this.curP+=(this.targetP-this.curP)*0.09;
+    if(Math.abs(this.targetP-this.curP)<0.0002)this.curP=this.targetP;
+    if(this.three.ready){ this.setProgress(this.curP); this.three.renderer.render(this.three.scene,this.three.camera); }
+    this.updateOverlays(this.curP);
+    this.updateNav();
+    this.raf=requestAnimationFrame(this.loop);
+  };
+
+  renderVals(){
+    return {
+      setCanvas:this.setCanvas, setNav:this.setNav, setTrack:this.setTrack, setScan:this.setScan,
+      menuOpen:this.state.menuOpen, toggleMenu:this.toggleMenu, closeMenu:this.closeMenu,
+      submitted:this.state.submitted, notSubmitted:!this.state.submitted, submit:this.submit
+    };
+  }
+}
+</script>
+</body>
+</html>
