@@ -462,7 +462,7 @@ class Component extends DCLogic {
     'Woodcroft':{base:'#d7ccb6',vein:'#9a8968',vein2:'#b7a888',cloud:'#e0d7c4',veins:4}
   };
   heroPresets={
-    'Calacatta White':{base:'#f1efe8',vein:'#787c82',vein2:'#bfa06a',cloud:'#f8f6f1',veins:8},
+    'Calacatta White':{base:'#f7f5ef',vein:'#565b62',vein2:'#ab8846',cloud:'#fcfaf5',veins:8},
     'Fantasy Brown':{base:'#b3a48b',vein:'#6b5942',vein2:'#8fa093',cloud:'#c9bda6',veins:6},
     'Black Mist':{base:'#24251f',vein:'#5c6058',vein2:'#3a3c35',cloud:'#1a1b16',veins:4},
     'Butcher Block':{base:'#b07a3f',vein:'#7c4d20',vein2:'#c99a5c',cloud:'#9c6530',mode:'wood'}
@@ -501,48 +501,72 @@ class Component extends DCLogic {
 
   /* ---------- texture helpers ---------- */
   hexA(hex,a){const h=hex.replace('#','');return `rgba(${parseInt(h.substr(0,2),16)},${parseInt(h.substr(2,2),16)},${parseInt(h.substr(4,2),16)},${a})`;}
-  vein(g,S,color,alpha,thin){
+  vein(g,S,color,alpha,thin,k,wm){
+    k=k||1; wm=wm||1;
     let x,y;
     if(Math.random()<0.5){ x=Math.random()*S; y=Math.random()<0.5?-10:S+10; }
     else { x=Math.random()<0.5?-10:S+10; y=Math.random()*S; }
     let ang=Math.atan2(S/2-y,S/2-x)+(Math.random()-0.5)*1.1;
-    const w=thin?0.7+Math.random()*0.8:3.4+Math.random()*4.8;
+    const w=(thin?0.6+Math.random()*0.9:2.8+Math.random()*4.6)*k*wm;
     g.strokeStyle=this.hexA(color,alpha); g.lineWidth=w; g.lineJoin='round'; g.lineCap='round';
     g.beginPath(); g.moveTo(x,y);
-    const steps=70+Math.random()*50;
+    const steps=80+Math.random()*70;
     for(let s=0;s<steps;s++){
-      ang+=(Math.random()-0.5)*0.5; const len=8+Math.random()*10;
+      ang+=(Math.random()-0.5)*0.55; const len=(8+Math.random()*10)*k;
       x+=Math.cos(ang)*len; y+=Math.sin(ang)*len; g.lineTo(x,y);
-      if(!thin&&Math.random()<0.05){ this.branch(g,x,y,ang+(Math.random()-0.5)*1.4,color,alpha*0.55,w*0.5); }
+      if(!thin&&Math.random()<0.06){ this.branch(g,x,y,ang+(Math.random()-0.5)*1.4,color,alpha*0.5,w*0.5,k); }
       if(x<-60||x>S+60||y<-60||y>S+60)break;
     }
     g.stroke();
   }
-  branch(g,x,y,ang,color,alpha,w){
-    g.strokeStyle=this.hexA(color,alpha); g.lineWidth=Math.max(0.5,w); g.beginPath(); g.moveTo(x,y);
-    for(let s=0;s<22;s++){ ang+=(Math.random()-0.5)*0.7; x+=Math.cos(ang)*7; y+=Math.sin(ang)*7; g.lineTo(x,y); }
+  branch(g,x,y,ang,color,alpha,w,k){
+    k=k||1;
+    g.strokeStyle=this.hexA(color,alpha); g.lineWidth=Math.max(0.5*k,w); g.beginPath(); g.moveTo(x,y);
+    const n=18+Math.random()*14;
+    for(let s=0;s<n;s++){ ang+=(Math.random()-0.5)*0.7; x+=Math.cos(ang)*7*k; y+=Math.sin(ang)*7*k; g.lineTo(x,y); }
     g.stroke();
   }
-  makeStoneCanvas(o){
-    const S=1024, c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
+  grain(g,S,amt){
+    const img=g.getImageData(0,0,S,S), d=img.data;
+    for(let i=0;i<d.length;i+=4){ const n=(Math.random()-0.5)*255*amt; d[i]+=n; d[i+1]+=n; d[i+2]+=n; }
+    g.putImageData(img,0,0);
+  }
+  // roughness map derived from albedo: darker veining reads slightly rougher than the polished field
+  roughFrom(src,lo,hi){
+    const S=src.width, c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
+    g.drawImage(src,0,0); const img=g.getImageData(0,0,S,S), d=img.data;
+    for(let i=0;i<d.length;i+=4){ const l=(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114)/255; const v=Math.round((lo+(hi-lo)*(1-l))*255); d[i]=d[i+1]=d[i+2]=v; }
+    g.putImageData(img,0,0); return c;
+  }
+  makeStoneCanvas(o,S){
+    S=S||1024; const k=S/1024;
+    const c=document.createElement('canvas'); c.width=c.height=S; const g=c.getContext('2d');
     g.fillStyle=o.base; g.fillRect(0,0,S,S);
-    for(let i=0;i<30;i++){
-      const r=140+Math.random()*280, x=Math.random()*S, y=Math.random()*S;
+    // soft translucent clouding for depth
+    for(let i=0;i<24;i++){
+      const r=(150+Math.random()*300)*k, x=Math.random()*S, y=Math.random()*S;
       const rg=g.createRadialGradient(x,y,0,x,y,r); const col=o.cloud||o.vein2||o.vein;
-      rg.addColorStop(0,this.hexA(col,0.05+Math.random()*0.07)); rg.addColorStop(1,this.hexA(col,0));
+      rg.addColorStop(0,this.hexA(col,0.035+Math.random()*0.055)); rg.addColorStop(1,this.hexA(col,0));
       g.fillStyle=rg; g.fillRect(0,0,S,S);
     }
     if(o.mode==='wood'){
       for(let i=0;i<80;i++){
         const y=Math.random()*S; g.strokeStyle=this.hexA(Math.random()<0.5?o.vein:o.vein2,0.04+Math.random()*0.11);
-        g.lineWidth=0.5+Math.random()*2.6; g.beginPath(); g.moveTo(0,y); let yy=y;
-        for(let xx=0;xx<=S;xx+=30){ yy+=(Math.random()-0.5)*7; g.lineTo(xx,yy); } g.stroke();
+        g.lineWidth=(0.5+Math.random()*2.6)*k; g.beginPath(); g.moveTo(0,y); let yy=y;
+        for(let xx=0;xx<=S;xx+=30*k){ yy+=(Math.random()-0.5)*7*k; g.lineTo(xx,yy); } g.stroke();
       }
     } else {
       const n=o.veins||5;
-      for(let i=0;i<n;i++) this.vein(g,S,i%2?o.vein2:o.vein,0.9);
-      for(let i=0;i<n*3;i++) this.vein(g,S,o.vein2||o.vein,0.32,true);
+      // a few dramatic statement veins (wider + darker) — the eye-catchers
+      for(let i=0;i<Math.max(2,Math.round(n*0.4));i++) this.vein(g,S,o.vein,0.94,false,k,1.8);
+      // primary structural grey veins
+      for(let i=0;i<n;i++) this.vein(g,S,o.vein,0.85,false,k);
+      // warm gold accent veins (the Calacatta signature)
+      if(o.vein2) for(let i=0;i<Math.max(2,Math.round(n*0.6));i++) this.vein(g,S,o.vein2,0.52,false,k);
+      // fine capillary network feathering off the mains
+      for(let i=0;i<n*4;i++) this.vein(g,S,o.vein2||o.vein,0.3,true,k);
     }
+    if(S>=1400) this.grain(g,S,0.028);   // micro surface grain on the hi-res hero slab
     return c;
   }
   makeTex(canvas,ru,rv,ou,ov){
@@ -577,57 +601,80 @@ class Component extends DCLogic {
     const bgTex=new T.CanvasTexture(bgc); bgTex.encoding=T.sRGBEncoding; scene.background=bgTex;
     scene.fog=new T.Fog(0xe7dfce,7,20);
 
-    // environment for reflections
-    const ec=document.createElement('canvas'); ec.width=1024; ec.height=512; const eg=ec.getContext('2d');
-    const eGrad=eg.createLinearGradient(0,0,0,512); eGrad.addColorStop(0,'#fff7ec'); eGrad.addColorStop(0.45,'#efe9de'); eGrad.addColorStop(1,'#b6afa1');
-    eg.fillStyle=eGrad; eg.fillRect(0,0,1024,512);
-    const disc=eg.createRadialGradient(320,150,10,320,150,180); disc.addColorStop(0,'rgba(255,255,255,0.95)'); disc.addColorStop(1,'rgba(255,255,255,0)');
-    eg.fillStyle=disc; eg.fillRect(0,0,1024,512);
-    const disc2=eg.createRadialGradient(760,120,10,760,120,120); disc2.addColorStop(0,'rgba(255,255,255,0.55)'); disc2.addColorStop(1,'rgba(255,255,255,0)');
-    eg.fillStyle=disc2; eg.fillRect(0,0,1024,512);
+    // environment for reflections — a believable warm interior so the polished stone mirrors a real room
+    const EW=2048, EH=1024;
+    const ec=document.createElement('canvas'); ec.width=EW; ec.height=EH; const eg=ec.getContext('2d');
+    const eGrad=eg.createLinearGradient(0,0,0,EH);
+    eGrad.addColorStop(0.00,'#fbf4e7');   // ceiling, warm
+    eGrad.addColorStop(0.40,'#efe8da');   // upper wall
+    eGrad.addColorStop(0.60,'#d8cebb');   // lower wall
+    eGrad.addColorStop(0.72,'#c3b7a1');   // counter line
+    eGrad.addColorStop(1.00,'#a1977f');   // floor
+    eg.fillStyle=eGrad; eg.fillRect(0,0,EW,EH);
+    // bright picture window (main highlight) with mullions
+    const wx=EW*0.30, wy=EH*0.16, ww=EW*0.26, wh=EH*0.30;
+    eg.fillStyle='rgba(255,252,244,0.98)'; eg.fillRect(wx,wy,ww,wh);
+    eg.strokeStyle='rgba(198,188,168,0.7)'; eg.lineWidth=EW*0.006; eg.strokeRect(wx,wy,ww,wh);
+    eg.beginPath(); eg.moveTo(wx+ww/2,wy); eg.lineTo(wx+ww/2,wy+wh); eg.moveTo(wx,wy+wh/2); eg.lineTo(wx+ww,wy+wh/2); eg.stroke();
+    // soft secondary highlights + ceiling glow
+    const soft=(x,y,r,a)=>{ const rg=eg.createRadialGradient(x,y,0,x,y,r); rg.addColorStop(0,`rgba(255,255,255,${a})`); rg.addColorStop(1,'rgba(255,255,255,0)'); eg.fillStyle=rg; eg.fillRect(x-r,y-r,r*2,r*2); };
+    soft(EW*0.72,EH*0.20,EW*0.12,0.7); soft(EW*0.06,EH*0.24,EW*0.09,0.45); soft(EW*0.5,EH*0.02,EW*0.5,0.25);
+    // darker floor band for grounding
+    const fl=eg.createLinearGradient(0,EH*0.72,0,EH); fl.addColorStop(0,'rgba(60,50,38,0)'); fl.addColorStop(1,'rgba(60,50,38,0.28)');
+    eg.fillStyle=fl; eg.fillRect(0,EH*0.72,EW,EH*0.28);
     const envTex=new T.CanvasTexture(ec); envTex.mapping=T.EquirectangularReflectionMapping;
     const pmrem=new T.PMREMGenerator(renderer); scene.environment=pmrem.fromEquirectangular(envTex).texture; envTex.dispose();
 
     // lights
-    const hemi=new T.HemisphereLight(0xfff3e2,0x8a7f6f,0.55); scene.add(hemi);
-    const key=new T.DirectionalLight(0xffe9cf,2.5); key.position.set(3.6,6,4); key.castShadow=true;
-    key.shadow.mapSize.set(2048,2048); key.shadow.camera.near=1; key.shadow.camera.far=22;
-    key.shadow.camera.left=-4; key.shadow.camera.right=4; key.shadow.camera.top=4; key.shadow.camera.bottom=-4; key.shadow.bias=-0.0004;
+    const hemi=new T.HemisphereLight(0xfff3e2,0x8a7f6f,0.5); scene.add(hemi);
+    const key=new T.DirectionalLight(0xffe9cf,2.6); key.position.set(3.6,6,4); key.castShadow=true;
+    key.shadow.mapSize.set(4096,4096); key.shadow.camera.near=1; key.shadow.camera.far=22;
+    key.shadow.camera.left=-4; key.shadow.camera.right=4; key.shadow.camera.top=4; key.shadow.camera.bottom=-4;
+    key.shadow.bias=-0.0003; key.shadow.normalBias=0.02; key.shadow.radius=5;
     scene.add(key);
-    const fill=new T.DirectionalLight(0xdfe6ff,0.45); fill.position.set(-4,3,-2); scene.add(fill);
+    const fill=new T.DirectionalLight(0xdfe6ff,0.5); fill.position.set(-4,3,-2); scene.add(fill);
+    const front=new T.DirectionalLight(0xfff1de,0.35); front.position.set(0.5,2.2,5); scene.add(front);   // lifts cabinet faces
+    const rim=new T.DirectionalLight(0xffffff,0.22); rim.position.set(-2,3.5,-4); scene.add(rim);          // edge separation
     const glint=new T.PointLight(0xfff4e2,0,3); glint.position.set(0,1.1,0.5); scene.add(glint);
 
     // ground (shadow receiver, color lerps studio->oak)
     const ground=new T.Mesh(new T.PlaneGeometry(40,40), new T.MeshStandardMaterial({color:0xdcd2c0,roughness:0.95,metalness:0}));
     ground.rotation.x=-Math.PI/2; ground.position.y=0; ground.receiveShadow=true; scene.add(ground);
 
-    // ---- cabinets ----
+    // ---- cabinets (shaker-style painted base cabinets) ----
     const cabGroup=new T.Group();
-    const cabMat=new T.MeshStandardMaterial({color:0x6d7a61,roughness:0.6,metalness:0.02,envMapIntensity:0.45});
+    const cabMat=new T.MeshStandardMaterial({color:0x6d7a61,roughness:0.72,metalness:0.0,envMapIntensity:0.35});
     const L=3.0, D=0.64, cabH=0.8, cabY0=0.10;
     const carcass=new T.Mesh(new T.BoxGeometry(L,cabH,D),cabMat);
     carcass.position.set(0,cabY0+cabH/2,0.01); carcass.castShadow=true; carcass.receiveShadow=true; cabGroup.add(carcass);
-    const kick=new T.Mesh(new T.BoxGeometry(L-0.1,0.1,D-0.08), new T.MeshStandardMaterial({color:0x2c2a26,roughness:0.8}));
+    const kick=new T.Mesh(new T.BoxGeometry(L-0.1,0.1,D-0.08), new T.MeshStandardMaterial({color:0x24221f,roughness:0.85}));
     kick.position.set(0,0.05,-0.02); cabGroup.add(kick);
     const doorMat=cabMat;
-    const pull=new T.MeshStandardMaterial({color:0xcaa46a,roughness:0.35,metalness:0.85});
-    const nDoors=6, gap=0.02, dw=(L-gap*(nDoors+1))/nDoors, dh=cabH-0.12, dz=D/2+0.01;
+    const pull=new T.MeshStandardMaterial({color:0xc2a262,roughness:0.3,metalness:0.9,envMapIntensity:1.1});
+    const nDoors=6, gap=0.022, dw=(L-gap*(nDoors+1))/nDoors, dh=cabH-0.12, dz=D/2+0.006, cy=cabY0+cabH/2, fw=0.05;
     for(let i=0;i<nDoors;i++){
       const x=-L/2+gap+dw/2+i*(dw+gap);
-      const door=new T.Mesh(new T.BoxGeometry(dw,dh,0.03),doorMat);
-      door.position.set(x,cabY0+cabH/2,dz); door.castShadow=true; cabGroup.add(door);
-      const bar=new T.Mesh(new T.BoxGeometry(0.012,0.16,0.02),pull);
-      bar.position.set(x+ (i%2? -dw/2+0.05 : dw/2-0.05), cabY0+cabH/2+0.18, dz+0.02); cabGroup.add(bar);
+      // recessed centre panel
+      const panel=new T.Mesh(new T.BoxGeometry(dw,dh,0.02),doorMat);
+      panel.position.set(x,cy,dz-0.004); panel.castShadow=true; panel.receiveShadow=true; cabGroup.add(panel);
+      // raised shaker frame (4 rails)
+      const rail=(bw,bh,bx,by)=>{ const b=new T.Mesh(new T.BoxGeometry(bw,bh,0.024),doorMat); b.position.set(x+bx,cy+by,dz+0.006); b.castShadow=true; b.receiveShadow=true; cabGroup.add(b); };
+      rail(dw,fw,0,dh/2-fw/2); rail(dw,fw,0,-(dh/2-fw/2)); rail(fw,dh-2*fw,-(dw/2-fw/2),0); rail(fw,dh-2*fw,dw/2-fw/2,0);
+      // brushed-brass bar pull, alternating sides
+      const bar=new T.Mesh(new T.BoxGeometry(0.011,0.19,0.018),pull);
+      bar.position.set(x+(i%2? -dw/2+0.055 : dw/2-0.055), cy+0.16, dz+0.02); bar.castShadow=true; cabGroup.add(bar);
     }
     scene.add(cabGroup);
 
-    // ---- countertop slab (frame around sink cutout, continuous marble) ----
+    // ---- countertop slab (frame around the sink cutout, one continuous marble) ----
     const slabGroup=new T.Group();
-    const topY=0.92, th=0.045;
+    const topY=0.92, th=0.05;
     const hx0=-0.38,hx1=0.38,hz0=0.0,hz1=0.28;      // sink hole
     const X0=-1.52,X1=1.52,Z0=-0.34,Z1=0.36;         // slab extents (overhang)
     const totW=X1-X0, totD=Z1-Z0;
-    this.slabCanvas=this.makeStoneCanvas(this.heroPresets['Calacatta White']);
+    this.SLAB_S=2048;
+    this.slabCanvas=document.createElement('canvas'); this.slabCanvas.width=this.slabCanvas.height=this.SLAB_S;
+    this.slabRoughCanvas=document.createElement('canvas'); this.slabRoughCanvas.width=this.slabRoughCanvas.height=this.SLAB_S;
     const pieces=[
       [X0,X1,Z0,hz0],   // back
       [X0,X1,hz1,Z1],   // front lip
@@ -637,34 +684,36 @@ class Component extends DCLogic {
     this.slabMats=[]; this.slabTexs=[];
     pieces.forEach(p=>{
       const [x0,x1,z0,z1]=p, w=x1-x0, d=z1-z0;
-      const tex=this.makeTex(this.slabCanvas, w/totW, d/totD, (x0-X0)/totW, (z0-Z0)/totD);
-      const mat=new T.MeshPhysicalMaterial({map:tex,color:0xffffff,roughness:0.14,metalness:0,clearcoat:1,clearcoatRoughness:0.08,envMapIntensity:0.9});
+      const ru=w/totW, rv=d/totD, ou=(x0-X0)/totW, ov=(z0-Z0)/totD;
+      const tex=this.makeTex(this.slabCanvas,ru,rv,ou,ov);
+      const rgh=this.makeTex(this.slabRoughCanvas,ru,rv,ou,ov); rgh.encoding=T.LinearEncoding;
+      const mat=new T.MeshPhysicalMaterial({map:tex,roughnessMap:rgh,color:0xffffff,roughness:1,metalness:0,clearcoat:1,clearcoatRoughness:0.05,envMapIntensity:1.2,reflectivity:0.6});
       const m=new T.Mesh(new T.BoxGeometry(w,th,d),mat);
       m.position.set((x0+x1)/2,topY+th/2,(z0+z1)/2); m.castShadow=true; m.receiveShadow=true;
-      slabGroup.add(m); this.slabMats.push(mat); this.slabTexs.push(tex);
+      slabGroup.add(m); this.slabMats.push(mat); this.slabTexs.push(tex,rgh);
     });
     scene.add(slabGroup);
 
     // ---- backsplash (marble, rises) ----
     const bsGroup=new T.Group(); bsGroup.position.set(0,topY+th,-0.34);
-    const bsCanvas=this.slabCanvas;
-    const bsTex=this.makeTex(bsCanvas,1,0.28,0,0);
-    const bsMat=new T.MeshPhysicalMaterial({map:bsTex,color:0xffffff,roughness:0.16,metalness:0,clearcoat:0.8,clearcoatRoughness:0.12,envMapIntensity:0.8,transparent:true});
+    const bsTex=this.makeTex(this.slabCanvas,1,0.28,0,0);
+    const bsRough=this.makeTex(this.slabRoughCanvas,1,0.28,0,0); bsRough.encoding=T.LinearEncoding;
+    const bsMat=new T.MeshPhysicalMaterial({map:bsTex,roughnessMap:bsRough,color:0xffffff,roughness:1,metalness:0,clearcoat:0.85,clearcoatRoughness:0.1,envMapIntensity:1.0,transparent:true});
     const bs=new T.Mesh(new T.BoxGeometry(totW,0.5,0.03),bsMat); bs.position.set(0,0.25,0); bs.castShadow=true; bsGroup.add(bs);
-    bsGroup.scale.y=0.001; scene.add(bsGroup); this.slabTexs.push(bsTex); this.slabMats.push(bsMat); this.bsMat=bsMat;
+    bsGroup.scale.y=0.001; scene.add(bsGroup); this.slabTexs.push(bsTex,bsRough); this.slabMats.push(bsMat); this.bsMat=bsMat;
 
     // ---- sink + faucet (drop in) ----
     const sinkGroup=new T.Group();
-    const basinMat=new T.MeshStandardMaterial({color:0x2b2d2c,roughness:0.5,metalness:0.55});
+    const basinMat=new T.MeshStandardMaterial({color:0x26282a,roughness:0.4,metalness:0.7,envMapIntensity:0.8});
     const basin=new T.Mesh(new T.BoxGeometry(0.7,0.22,0.30),basinMat);
     basin.position.set(0,topY-0.10,0.14); basin.castShadow=true; basin.receiveShadow=true; sinkGroup.add(basin);
-    const inner=new T.Mesh(new T.BoxGeometry(0.64,0.2,0.26),new T.MeshStandardMaterial({color:0x3a3c3b,roughness:0.35,metalness:0.7}));
+    const inner=new T.Mesh(new T.BoxGeometry(0.64,0.2,0.26),new T.MeshStandardMaterial({color:0x33373a,roughness:0.28,metalness:0.85,envMapIntensity:0.9}));
     inner.position.set(0,topY-0.08,0.14); sinkGroup.add(inner);
-    const steel=new T.MeshStandardMaterial({color:0xd7d9da,roughness:0.28,metalness:0.95,envMapIntensity:1});
-    const fBase=new T.Mesh(new T.CylinderGeometry(0.035,0.045,0.05,20),steel); fBase.position.set(0,topY+0.05,-0.02); sinkGroup.add(fBase);
-    const fRise=new T.Mesh(new T.CylinderGeometry(0.022,0.024,0.30,20),steel); fRise.position.set(0,topY+0.20,-0.02); sinkGroup.add(fRise);
-    const fArc=new T.Mesh(new T.TorusGeometry(0.09,0.022,16,24,Math.PI*0.85),steel); fArc.position.set(0,topY+0.35,-0.02); fArc.rotation.z=-Math.PI*0.05; sinkGroup.add(fArc);
-    const fSpout=new T.Mesh(new T.CylinderGeometry(0.02,0.02,0.06,16),steel); fSpout.position.set(0.085,topY+0.34,0.03); sinkGroup.add(fSpout);
+    const steel=new T.MeshStandardMaterial({color:0xcfd3d6,roughness:0.2,metalness:1,envMapIntensity:1.3});
+    const fBase=new T.Mesh(new T.CylinderGeometry(0.032,0.05,0.05,28),steel); fBase.position.set(0,topY+0.05,-0.02); sinkGroup.add(fBase);
+    const fRise=new T.Mesh(new T.CylinderGeometry(0.02,0.024,0.30,28),steel); fRise.position.set(0,topY+0.20,-0.02); sinkGroup.add(fRise);
+    const fArc=new T.Mesh(new T.TorusGeometry(0.09,0.021,20,32,Math.PI*0.9),steel); fArc.position.set(0,topY+0.35,-0.02); fArc.rotation.z=-Math.PI*0.05; sinkGroup.add(fArc);
+    const fSpout=new T.Mesh(new T.CylinderGeometry(0.018,0.02,0.07,20),steel); fSpout.position.set(0.088,topY+0.335,0.03); fSpout.rotation.z=0.15; sinkGroup.add(fSpout);
     sinkGroup.traverse(o=>{o.castShadow=true;});
     sinkGroup.visible=false; scene.add(sinkGroup);
 
@@ -700,18 +749,23 @@ class Component extends DCLogic {
     renderer.render(scene,camera);
   }
 
+  rebuildSlabTextures(hp){
+    const S=this.SLAB_S, wood=hp.mode==='wood';
+    const albedo=this.makeStoneCanvas(hp,S);
+    const ac=this.slabCanvas.getContext('2d'); ac.clearRect(0,0,S,S); ac.drawImage(albedo,0,0);
+    const rough=this.roughFrom(albedo, wood?0.42:0.12, wood?0.7:0.34);
+    const rc=this.slabRoughCanvas.getContext('2d'); rc.clearRect(0,0,S,S); rc.drawImage(rough,0,0);
+    this.slabTexs.forEach(t=>{ t.needsUpdate=true; });
+  }
   applyTweaks(){
     if(!this.three.ready)return; const T=THREE;
     const hp=this.heroPresets[this.props.heroMaterial]||this.heroPresets['Calacatta White'];
     const cab=this.cabPresets[this.props.cabinetColor]||this.cabPresets['Sage'];
     const day=this.dayPresets[this.props.daylight]||this.dayPresets['Warm'];
-    // slab material
-    try{ this.slabCanvas.getContext('2d'); }catch(e){}
-    const fresh=this.makeStoneCanvas(hp);
-    const ctx=this.slabCanvas.getContext('2d'); ctx.clearRect(0,0,1024,1024); ctx.drawImage(fresh,0,0);
     const wood=hp.mode==='wood', dark=this.props.heroMaterial==='Black Mist';
-    this.slabTexs.forEach(t=>{ t.needsUpdate=true; });
-    this.slabMats.forEach(m=>{ m.roughness=wood?0.5:0.14; m.clearcoat=wood?0.3:1; m.clearcoatRoughness=wood?0.4:0.08; m.envMapIntensity=dark?0.6:0.9; m.needsUpdate=true; });
+    // rebuild the marble albedo + roughness maps, then tune the physical material
+    this.rebuildSlabTextures(hp);
+    this.slabMats.forEach(m=>{ m.roughness=1; m.clearcoat=wood?0.35:1; m.clearcoatRoughness=wood?0.4:0.05; m.envMapIntensity=dark?0.75:1.2; m.needsUpdate=true; });
     // cabinets
     this.three.cabMat.color.set(cab);
     // lights + mood
